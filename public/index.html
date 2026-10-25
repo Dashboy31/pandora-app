@@ -22,6 +22,7 @@
     --clay:#B2583C; --clay-ink:#8C4128; --clay-wash:#F5E3DA;
     --danger:#A6412F; --danger-wash:#F3DEDA;
     --shadow:rgba(20,22,31,.08); --shadow-lg:rgba(20,22,31,.16);
+    --atmo-glow:.5; --atmo-grain:.16; --atmo-blur:54px;
     --font-logo:"Lora", Georgia, serif;
     --font-display:"Space Grotesk", Inter, sans-serif;
     --font-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
@@ -39,6 +40,7 @@
       --clay:#E2A37E; --clay-ink:#EDBE9E; --clay-wash:#301F16;
       --danger:#D98A7B; --danger-wash:#301C1A;
       --shadow:rgba(0,0,0,.35); --shadow-lg:rgba(0,0,0,.55);
+      --atmo-glow:1; --atmo-grain:.5; --atmo-blur:46px;
       color-scheme: dark;
     }
   }
@@ -52,15 +54,39 @@
     --clay:#E2A37E; --clay-ink:#EDBE9E; --clay-wash:#301F16;
     --danger:#D98A7B; --danger-wash:#301C1A;
     --shadow:rgba(0,0,0,.35); --shadow-lg:rgba(0,0,0,.55);
+    --atmo-glow:1; --atmo-grain:.5; --atmo-blur:46px;
     color-scheme: dark;
   }
 
   *{box-sizing:border-box;}
   html,body{margin:0;}
+  html{background:var(--bg);}
   body{
+    position:relative; min-height:100vh;
     background:var(--bg); color:var(--fg); font-family:var(--font-body);
     padding-left:max(16px, env(safe-area-inset-left,0px));
     padding-right:max(16px, env(safe-area-inset-right,0px));
+  }
+  /* ---- cinema atmosphere: fixed backdrop behind every screen ----
+     --atmo-glow/--atmo-grain/--atmo-blur are theme tokens (defined
+     alongside the colour tokens above) so light/dark/system all resolve
+     correctly through the same cascade as --bg, --accent, etc. — no
+     separate selector trying to guess the active theme. */
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-2; pointer-events:none;
+    background:
+      radial-gradient(620px 560px at 50% 4%, var(--accent) 0%, var(--accent) 14%, transparent 62%),
+      radial-gradient(560px 640px at 106% 46%, var(--lavender) 0%, var(--lavender) 11%, transparent 60%),
+      radial-gradient(520px 480px at -10% 80%, var(--sage) 0%, var(--sage) 9%, transparent 58%),
+      radial-gradient(640px 560px at 64% 118%, var(--clay) 0%, var(--clay) 10%, transparent 60%),
+      var(--bg);
+    filter:blur(var(--atmo-blur)); opacity:var(--atmo-glow);
+  }
+  /* faint grain on top of the colour wash, under the content */
+  body::after{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay; opacity:var(--atmo-grain);
   }
   h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0;}
   p{margin:0;}
@@ -69,17 +95,19 @@
   img{max-width:100%;}
   [hidden]{display:none!important;}
 
-  .shell{max-width:760px; margin:0 auto; padding:0 0 60px;}
+  .shell{max-width:760px; margin:0 auto; padding:0 0 60px; position:relative; z-index:1;}
 
   /* ---- login ---- */
   .login-shell{
     min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding:40px 0; position:relative; overflow:hidden;
+    padding:40px 0; position:relative; z-index:1;
   }
   .login-card{
-    position:relative; z-index:1; width:100%; max-width:380px; background:var(--surface);
+    position:relative; z-index:1; width:100%; max-width:380px;
+    background:color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
     border:1px solid var(--line); border-radius:var(--radius-xl); padding:32px 26px;
-    box-shadow:0 20px 50px var(--shadow-lg);
+    box-shadow:0 24px 60px var(--shadow-lg), 0 0 80px -20px var(--accent);
   }
   .login-card .brand{justify-content:center; margin-bottom:22px;}
   .login-card h1{font-size:22px; font-weight:700; text-align:center; margin-bottom:8px;}
@@ -87,18 +115,20 @@
   .login-foot{position:relative; z-index:1; margin-top:22px; text-align:center; font-size:11.5px; color:var(--fg-faint); max-width:340px; line-height:1.5; font-style:italic;}
 
   /* ---- hero ---- */
-  .hero{position:relative; overflow:hidden; padding:22px 0 30px; margin-bottom:8px;}
-  .hero-glow{
-    position:absolute; top:-120px; right:-90px; width:340px; height:340px; border-radius:50%;
-    background:
-      radial-gradient(closest-side, var(--accent) 0%, transparent 72%),
-      radial-gradient(closest-side at 70% 70%, var(--lavender) 0%, transparent 70%),
-      radial-gradient(closest-side at 30% 75%, var(--sage) 0%, transparent 72%);
-    filter:blur(46px); opacity:.5; pointer-events:none; z-index:0;
+  .hero{position:relative; padding:22px 0 30px; margin-bottom:8px;}
+  .hero-orbits{position:absolute; top:-60px; right:-60px; width:300px; height:300px; pointer-events:none; z-index:0; opacity:.6;}
+  .hero-orbits ellipse{fill:none; stroke:var(--accent); stroke-width:1; opacity:.5;}
+  .login-orbits{
+    position:absolute; top:50%; left:50%; width:560px; height:560px; max-width:none;
+    transform:translate(-50%,-50%); pointer-events:none; z-index:0;
   }
-  :root[data-theme="light"] .hero-glow, :root:not([data-theme]) .hero-glow{opacity:.28;}
-  .hero-orbits{position:absolute; top:-60px; right:-60px; width:300px; height:300px; pointer-events:none; z-index:0; opacity:.5;}
-  .hero-orbits ellipse{fill:none; stroke:var(--line); stroke-width:1;}
+  .login-orbits ellipse{fill:none; stroke:var(--accent); stroke-width:1; opacity:.3;}
+  .login-glow{
+    position:absolute; top:12%; left:50%; width:440px; height:440px; max-width:none;
+    transform:translateX(-50%); pointer-events:none; z-index:0;
+    background:radial-gradient(circle, var(--accent) 0%, var(--accent) 10%, transparent 68%);
+    filter:blur(44px); opacity:var(--atmo-glow);
+  }
 
   .topbar{position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:22px;}
   .brand{display:flex; align-items:center; gap:9px;}
@@ -291,7 +321,12 @@
 
 <!-- LOGIN VIEW -->
 <div class="login-shell" id="view-login">
-  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="login-glow" aria-hidden="true"></div>
+  <svg class="login-orbits" aria-hidden="true" viewBox="0 0 520 520">
+    <ellipse cx="260" cy="260" rx="260" ry="160" transform="rotate(-14 260 260)"/>
+    <ellipse cx="260" cy="260" rx="195" ry="118" transform="rotate(-14 260 260)"/>
+    <ellipse cx="260" cy="260" rx="128" ry="76" transform="rotate(-14 260 260)"/>
+  </svg>
   <div class="login-card">
     <div class="brand">
       <svg width="19" height="21" viewBox="0 0 59 64" fill="none">
@@ -321,7 +356,6 @@
 <div class="shell" id="appShell" hidden>
 
   <div class="hero">
-    <div class="hero-glow" aria-hidden="true"></div>
     <svg class="hero-orbits" aria-hidden="true" viewBox="0 0 300 300">
       <ellipse cx="150" cy="150" rx="150" ry="90" transform="rotate(-18 150 150)"/>
       <ellipse cx="150" cy="150" rx="110" ry="65" transform="rotate(-18 150 150)"/>
