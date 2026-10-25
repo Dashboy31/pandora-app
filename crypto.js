@@ -5,6 +5,8 @@
    key makes every stored password unrecoverable; rotating it requires
    re-encrypting the database. */
 const crypto = require("crypto");
+const { promisify } = require("util");
+const scryptAsync = promisify(crypto.scrypt);
 
 function getKey() {
   const raw = process.env.ENCRYPTION_KEY;
@@ -38,4 +40,33 @@ function decrypt(payload) {
   return dec.toString("utf8");
 }
 
-module.exports = { encrypt, decrypt };
+/* Group passphrases (admin/integrante) are now stored in a shared,
+   multi-tenant database instead of single per-deploy env vars, so they
+   get hashed instead of kept reversible — scrypt (built into Node, no
+   native addon to compile, unlike bcrypt) with a random salt per hash,
+   compared with a timing-safe equality check. */
+async function hashPassphrase(passphrase) {
+  const salt = crypto.randomBytes(16);
+  const derived = await scryptAsync(String(passphrase == null ? "" : passphrase), salt, 64);
+  return salt.toString("hex") + ":" + derived.toString("hex");
+}
+
+async function verifyPassphrase(passphrase, stored) {
+  if (!stored) return false;
+  const parts = String(stored).split(":");
+  if (parts.length !== 2) return false;
+  const [saltHex, hashHex] = parts;
+  let salt, expected;
+  try {
+    salt = Buffer.from(saltHex, "hex");
+    expected = Buffer.from(hashHex, "hex");
+  } catch (e) {
+    return false;
+  }
+  if (!salt.length || !expected.length) return false;
+  const derived = await scryptAsync(String(passphrase == null ? "" : passphrase), salt, 64);
+  if (derived.length !== expected.length) return false;
+  return crypto.timingSafeEqual(derived, expected);
+}
+
+module.exports = { encrypt, decrypt, hashPassphrase, verifyPassphrase };
