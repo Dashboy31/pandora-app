@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pandora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  /* Layout: single-column app shell (header / group bar / icon grid), a full
+     detail view and an add/edit sheet swapped in via [hidden]; brand carried
+     over from the Pandora investor deck (ink navy, cream, muted bronze/gold,
+     lavender secondary). */
+  :root{
+    --bg:#F4F5F7; --surface:#FFFFFF; --surface-2:#EAEBF0;
+    --fg:#14161F; --fg-soft:#585C6E; --fg-faint:#8A8EA3;
+    --line:#DDDFE6;
+    --accent:#8C6B32; --accent-ink:#6E5526; --accent-wash:#EDE4D2;
+    --sage:#3F7A52; --sage-ink:#2E5B3C; --sage-wash:#DEEBE1;
+    --lavender:#6B5FA3; --lavender-ink:#51447F; --lavender-wash:#E7E3F5;
+    --clay:#B2583C; --clay-ink:#8C4128; --clay-wash:#F5E3DA;
+    --danger:#A6412F; --danger-wash:#F3DEDA;
+    --shadow:rgba(20,22,31,.08); --shadow-lg:rgba(20,22,31,.16);
+    --font-logo:"Lora", Georgia, serif;
+    --font-display:"Space Grotesk", Inter, sans-serif;
+    --font-mono:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --font-body:"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --radius-xl:24px; --radius-lg:16px; --radius-md:11px; --radius-sm:8px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0B0D14; --surface:#12141F; --surface-2:#1A1D2B;
+      --fg:#E7E8EE; --fg-soft:#9BA0B4; --fg-faint:#676C82;
+      --line:#232640;
+      --accent:#D9B876; --accent-ink:#E9CD97; --accent-wash:#2A2415;
+      --sage:#7FB592; --sage-ink:#9DCBA9; --sage-wash:#15261A;
+      --lavender:#B6A8E0; --lavender-ink:#D3C7EF; --lavender-wash:#211D3A;
+      --clay:#E2A37E; --clay-ink:#EDBE9E; --clay-wash:#301F16;
+      --danger:#D98A7B; --danger-wash:#301C1A;
+      --shadow:rgba(0,0,0,.35); --shadow-lg:rgba(0,0,0,.55);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B0D14; --surface:#12141F; --surface-2:#1A1D2B;
+    --fg:#E7E8EE; --fg-soft:#9BA0B4; --fg-faint:#676C82;
+    --line:#232640;
+    --accent:#D9B876; --accent-ink:#E9CD97; --accent-wash:#2A2415;
+    --sage:#7FB592; --sage-ink:#9DCBA9; --sage-wash:#15261A;
+    --lavender:#B6A8E0; --lavender-ink:#D3C7EF; --lavender-wash:#211D3A;
+    --clay:#E2A37E; --clay-ink:#EDBE9E; --clay-wash:#301F16;
+    --danger:#D98A7B; --danger-wash:#301C1A;
+    --shadow:rgba(0,0,0,.35); --shadow-lg:rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--bg); color:var(--fg); font-family:var(--font-body);
+    padding-left:max(16px, env(safe-area-inset-left,0px));
+    padding-right:max(16px, env(safe-area-inset-right,0px));
+  }
+  h1,h2,h3{font-family:var(--font-display); text-wrap:balance; margin:0;}
+  p{margin:0;}
+  button{font-family:inherit; cursor:pointer;}
+  input,textarea{font-family:inherit; font-size:15px; color:var(--fg);}
+  img{max-width:100%;}
+  [hidden]{display:none!important;}
+
+  .shell{max-width:760px; margin:0 auto; padding:0 0 60px;}
+
+  /* ---- login ---- */
+  .login-shell{
+    min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:40px 0; position:relative; overflow:hidden;
+  }
+  .login-card{
+    position:relative; z-index:1; width:100%; max-width:380px; background:var(--surface);
+    border:1px solid var(--line); border-radius:var(--radius-xl); padding:32px 26px;
+    box-shadow:0 20px 50px var(--shadow-lg);
+  }
+  .login-card .brand{justify-content:center; margin-bottom:22px;}
+  .login-card h1{font-size:22px; font-weight:700; text-align:center; margin-bottom:8px;}
+  .login-card > p{color:var(--fg-soft); font-size:13.5px; text-align:center; margin-bottom:22px; line-height:1.5;}
+  .login-foot{position:relative; z-index:1; margin-top:22px; text-align:center; font-size:11.5px; color:var(--fg-faint); max-width:340px; line-height:1.5; font-style:italic;}
+
+  /* ---- hero ---- */
+  .hero{position:relative; overflow:hidden; padding:22px 0 30px; margin-bottom:8px;}
+  .hero-glow{
+    position:absolute; top:-120px; right:-90px; width:340px; height:340px; border-radius:50%;
+    background:
+      radial-gradient(closest-side, var(--accent) 0%, transparent 72%),
+      radial-gradient(closest-side at 70% 70%, var(--lavender) 0%, transparent 70%),
+      radial-gradient(closest-side at 30% 75%, var(--sage) 0%, transparent 72%);
+    filter:blur(46px); opacity:.5; pointer-events:none; z-index:0;
+  }
+  :root[data-theme="light"] .hero-glow, :root:not([data-theme]) .hero-glow{opacity:.28;}
+  .hero-orbits{position:absolute; top:-60px; right:-60px; width:300px; height:300px; pointer-events:none; z-index:0; opacity:.5;}
+  .hero-orbits ellipse{fill:none; stroke:var(--line); stroke-width:1;}
+
+  .topbar{position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:22px;}
+  .brand{display:flex; align-items:center; gap:9px;}
+  .brand svg{flex-shrink:0; color:var(--fg);}
+  .brand span{font-family:var(--font-logo); font-size:20px; font-weight:600; letter-spacing:.01em;}
+
+  .role-area{position:relative; z-index:1; display:flex; align-items:center; gap:8px; flex-shrink:0;}
+  .role-pill{
+    font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:.04em;
+    padding:7px 13px; border-radius:999px; background:var(--surface); border:1px solid var(--line);
+    color:var(--fg-soft); box-shadow:0 2px 10px var(--shadow); white-space:nowrap;
+  }
+  .role-pill.admin{background:var(--accent); color:var(--bg); border-color:transparent;}
+
+  .hero-tag{
+    position:relative; z-index:1; display:inline-flex; align-items:center; gap:6px;
+    font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--fg-faint); border:1px solid var(--line); border-radius:999px; padding:5px 12px 5px 9px; margin-bottom:16px;
+  }
+  .hero-tag .dot{width:6px; height:6px; border-radius:50%; background:var(--sage); flex-shrink:0;}
+
+  .hero-greet{position:relative; z-index:1; margin-bottom:22px;}
+  .hero-greet h1{
+    font-size:36px; line-height:1.08; font-weight:700; letter-spacing:-.01em; margin-bottom:12px; max-width:12ch;
+  }
+  .hero-greet p{color:var(--fg-soft); font-size:14.5px; line-height:1.55; max-width:42ch;}
+
+  .stat-row{position:relative; z-index:1; display:flex; gap:10px; flex-wrap:wrap;}
+  .stat-chip{
+    flex:1; min-width:128px; border-radius:var(--radius-lg); padding:16px 18px;
+    background:var(--surface); border:1px solid var(--line); box-shadow:0 2px 10px var(--shadow);
+  }
+  .stat-chip-accent{background:linear-gradient(135deg, var(--accent-wash), var(--lavender-wash)); border-color:transparent;}
+  .stat-num{display:block; font-family:var(--font-display); font-size:27px; font-weight:700; line-height:1;}
+  .stat-label{display:block; margin-top:5px; font-size:12px; color:var(--fg-soft);}
+
+  /* ---- group bar ---- */
+  .groupbar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    margin:30px 0 14px; flex-wrap:wrap;
+  }
+  .section-label{
+    font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--fg-faint);
+  }
+
+  .btn{
+    display:inline-flex; align-items:center; gap:7px; border-radius:999px; border:1px solid transparent;
+    font-size:13.5px; font-weight:600; padding:10px 17px; transition:opacity .15s, background .15s;
+  }
+  .btn-primary{background:var(--accent); color:var(--surface);}
+  .btn-primary:hover{opacity:.88;}
+  .btn-primary:disabled{opacity:.6; cursor:default;}
+  .btn-ghost{background:transparent; border-color:var(--line); color:var(--fg);}
+  .btn-ghost:hover{background:var(--surface-2);}
+  .btn-text{background:none; border:none; color:var(--fg-soft); font-size:13.5px; font-weight:600; padding:6px 2px;}
+  .btn-danger{background:none; border:none; color:var(--danger); font-size:13.5px; font-weight:600; padding:6px 2px;}
+
+  /* ---- grid ---- */
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(144px,1fr)); gap:12px;
+  }
+  .tile{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-lg);
+    padding:18px 16px; display:flex; flex-direction:column; gap:12px; text-align:left;
+    min-width:0; align-items:flex-start; color:var(--fg);
+    box-shadow:0 1px 2px var(--shadow); transition:transform .15s, box-shadow .15s, border-color .15s;
+  }
+  .tile:hover{border-color:var(--accent); transform:translateY(-2px); box-shadow:0 10px 22px var(--shadow-lg);}
+  .badge{
+    width:44px; height:44px; border-radius:var(--radius-md); display:flex; align-items:center; justify-content:center;
+    background:var(--surface-2); color:var(--accent-ink); flex-shrink:0;
+    font-family:var(--font-display); font-weight:700; font-size:15px; letter-spacing:.01em;
+  }
+  .badge-0{background:var(--accent-wash); color:var(--accent-ink);}
+  .badge-1{background:var(--sage-wash); color:var(--sage-ink);}
+  .badge-2{background:var(--lavender-wash); color:var(--lavender-ink);}
+  .badge-3{background:var(--clay-wash); color:var(--clay-ink);}
+  .badge-lg{width:52px; height:52px; border-radius:var(--radius-md); font-size:17px;}
+  .tile-name{font-size:14px; font-weight:600; line-height:1.3; width:100%; overflow-wrap:break-word;}
+  .tile-meta{display:flex; align-items:center; gap:5px; color:var(--fg-faint); font-size:11px;}
+  .tile-meta svg{flex-shrink:0;}
+
+  .tile-add{
+    position:relative; background:linear-gradient(135deg, var(--accent), var(--lavender)); color:var(--bg);
+    border:none; align-items:flex-start; justify-content:flex-end; text-align:left; gap:4px; min-height:124px;
+    box-shadow:0 10px 24px var(--shadow-lg);
+  }
+  .tile-add:hover{transform:translateY(-2px); box-shadow:0 14px 28px var(--shadow-lg);}
+  .tile-add span{font-size:13.5px; font-weight:700;}
+  .tile-add .arrow{
+    position:absolute; top:14px; right:14px; width:26px; height:26px; border-radius:50%;
+    background:rgba(255,255,255,.3); display:flex; align-items:center; justify-content:center;
+  }
+
+  .empty{
+    border:1px dashed var(--line); border-radius:var(--radius-md); padding:34px 20px; text-align:center;
+    color:var(--fg-faint); font-size:13.5px; grid-column:1/-1;
+  }
+
+  /* ---- detail view ---- */
+  .detail-head{display:flex; align-items:center; gap:14px; margin:20px 0 22px;}
+  .back-btn{
+    width:38px; height:38px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
+    display:flex; align-items:center; justify-content:center; color:var(--fg); flex-shrink:0;
+    box-shadow:0 2px 8px var(--shadow);
+  }
+  .back-btn:hover{background:var(--surface-2);}
+  .detail-title-row{display:flex; align-items:center; gap:14px; min-width:0;}
+  .detail-title-row h2{font-size:23px; font-weight:700; overflow-wrap:break-word; letter-spacing:-.005em;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-xl);
+    padding:22px 22px 8px; margin-bottom:14px; box-shadow:0 2px 12px var(--shadow);
+  }
+  .card-label{font-family:var(--font-mono); font-size:10.5px; font-weight:600; letter-spacing:.08em; color:var(--accent-ink); margin-bottom:12px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-family:var(--font-mono); font-size:9.5px; letter-spacing:.06em; color:var(--fg-faint); margin-bottom:5px; text-transform:uppercase;}
+  .field-row{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:var(--surface-2); border-radius:var(--radius-sm); padding:10px 12px; min-width:0;
+  }
+  .field-row span{font-family:var(--font-mono); font-size:13.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .field-row .icon-btn-row{display:flex; gap:2px; flex-shrink:0;}
+  .icon-btn{
+    width:28px; height:28px; border-radius:7px; border:none; background:transparent; color:var(--fg-soft);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .icon-btn:hover{background:var(--line);}
+  .toggle-line{display:flex; align-items:center; justify-content:space-between; font-size:13.5px; color:var(--fg-soft); margin-bottom:14px;}
+  .pill{font-size:10.5px; font-weight:700; padding:4px 11px; border-radius:999px;}
+  .pill-yes{background:var(--sage-wash); color:var(--sage);}
+  .pill-no{background:var(--surface-2); color:var(--fg-faint);}
+  .notes-text{font-size:13.5px; color:var(--fg-soft); line-height:1.55; padding-bottom:16px; white-space:pre-wrap;}
+
+  .admin-row{display:flex; align-items:center; gap:18px; padding:4px 2px 18px;}
+  .confirm-row{
+    display:flex; align-items:center; gap:10px; background:var(--danger-wash); border-radius:9px;
+    padding:9px 13px; font-size:13px; color:var(--danger);
+  }
+  .confirm-row button{font-size:12.5px; font-weight:700;}
+
+  /* ---- modal ---- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(14,16,34,.42); display:flex; align-items:flex-end;
+    justify-content:center; padding:0; z-index:20;
+  }
+  @media (min-width:640px){ .overlay{align-items:center; padding:20px;} }
+  .sheet{
+    background:var(--bg); width:100%; max-width:480px; max-height:92vh; overflow-y:auto;
+    border-radius:26px 26px 0 0; padding:24px max(20px, env(safe-area-inset-left,0px)) max(26px, env(safe-area-inset-bottom,0px));
+    box-shadow:0 -8px 30px var(--shadow-lg);
+  }
+  @media (min-width:640px){ .sheet{border-radius:var(--radius-xl); padding:28px;} }
+  .sheet h3{font-size:20px; font-weight:700; margin-bottom:18px; letter-spacing:-.005em;}
+  .input{
+    width:100%; background:var(--surface); border:1px solid var(--line); border-radius:9px;
+    padding:11px 12px; font-size:14.5px; color:var(--fg);
+  }
+  .input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  textarea.input{resize:vertical; min-height:64px;}
+  .switch-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:4px 0 2px;}
+  .switch-row span{font-size:13.5px; color:var(--fg);}
+  .switch{
+    width:40px; height:24px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line);
+    position:relative; flex-shrink:0; transition:background .15s;
+  }
+  .switch.on{background:var(--accent); border-color:var(--accent);}
+  .switch::after{
+    content:""; position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%;
+    background:var(--surface); transition:transform .15s;
+  }
+  .switch.on::after{transform:translateX(16px); background:#fff;}
+  .sheet-actions{display:flex; gap:10px; margin-top:22px;}
+  .sheet-actions .btn{flex:1; justify-content:center;}
+  .err{color:var(--danger); font-size:12.5px; margin-top:4px; min-height:1px;}
+
+  .footnote{
+    margin-top:36px; text-align:center; font-size:11.5px; color:var(--fg-faint); font-style:italic;
+    line-height:1.5; padding:0 10px;
+  }
+
+  @media (max-width:420px){
+    .groupbar{align-items:flex-start;}
+    .grid{grid-template-columns:repeat(auto-fill, minmax(124px,1fr));}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOGIN VIEW -->
+<div class="login-shell" id="view-login">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="login-card">
+    <div class="brand">
+      <svg width="19" height="21" viewBox="0 0 59 64" fill="none">
+        <rect x="15" y="8" width="10" height="48" rx="3" fill="var(--fg)"/>
+        <rect x="15" y="8" width="27" height="24" rx="12" fill="var(--fg)"/>
+        <circle cx="30" cy="19.5" r="4" fill="var(--bg)"/>
+        <rect x="25" y="42" width="6" height="4" rx="1" fill="var(--fg)"/>
+        <rect x="25" y="50" width="9" height="4" rx="1" fill="var(--fg)"/>
+      </svg>
+      <span>pandora</span>
+    </div>
+    <h1>Entrá al grupo</h1>
+    <p>Pedile la clave a quien administra el grupo familiar.</p>
+    <form id="loginForm">
+      <div class="field">
+        <label>Clave de acceso</label>
+        <input class="input" id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••••" required>
+      </div>
+      <div class="err" id="loginErr"></div>
+      <button type="submit" class="btn btn-primary" id="loginBtn" style="width:100%; justify-content:center; margin-top:4px;">Entrar</button>
+    </form>
+  </div>
+  <p class="login-foot">Prototipo en validación — los datos de acceso que cargues acá quedan cifrados en el servidor, pero el grupo todavía comparte una sola clave de administrador y una de integrante.</p>
+</div>
+
+<!-- APP SHELL -->
+<div class="shell" id="appShell" hidden>
+
+  <div class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <svg class="hero-orbits" aria-hidden="true" viewBox="0 0 300 300">
+      <ellipse cx="150" cy="150" rx="150" ry="90" transform="rotate(-18 150 150)"/>
+      <ellipse cx="150" cy="150" rx="110" ry="65" transform="rotate(-18 150 150)"/>
+      <ellipse cx="150" cy="150" rx="70" ry="40" transform="rotate(-18 150 150)"/>
+    </svg>
+
+    <div class="topbar">
+      <div class="brand">
+        <svg width="19" height="21" viewBox="0 0 59 64" fill="none">
+          <rect x="15" y="8" width="10" height="48" rx="3" fill="var(--fg)"/>
+          <rect x="15" y="8" width="27" height="24" rx="12" fill="var(--fg)"/>
+          <circle cx="30" cy="19.5" r="4" fill="var(--bg)"/>
+          <rect x="25" y="42" width="6" height="4" rx="1" fill="var(--fg)"/>
+          <rect x="25" y="50" width="9" height="4" rx="1" fill="var(--fg)"/>
+        </svg>
+        <span>pandora</span>
+      </div>
+      <div class="role-area">
+        <span class="role-pill" id="rolePill">—</span>
+        <button type="button" class="back-btn" id="logoutBtn" aria-label="Cerrar sesión" title="Cerrar sesión">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="hero-tag"><span class="dot"></span>Prototipo de validación</div>
+
+    <div class="hero-greet">
+      <h1>Los accesos del grupo, en un solo lugar.</h1>
+      <p>Guardá y compartí los datos de cada plataforma con tu grupo. Tocá una ficha para ver usuario, contraseña y notas de verificación.</p>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-chip stat-chip-accent">
+        <span class="stat-num" id="statCount">0</span>
+        <span class="stat-label">plataformas activas</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-num" id="statCode">0</span>
+        <span class="stat-label">piden código por email</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRID VIEW -->
+  <div id="view-grid">
+    <div class="groupbar">
+      <span class="section-label">Grupo Familia</span>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- DETAIL VIEW -->
+  <div id="view-detail" hidden>
+    <div class="detail-head">
+      <button class="back-btn" id="backBtn" aria-label="Volver">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div class="detail-title-row">
+        <div class="badge badge-lg" id="detailBadge"></div>
+        <h2 id="detailName"></h2>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">DATOS DE ACCESO</div>
+      <div class="field">
+        <label>Usuario / correo</label>
+        <div class="field-row">
+          <span id="detailUser"></span>
+          <div class="icon-btn-row">
+            <button class="icon-btn" data-copy="user" aria-label="Copiar usuario">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M5 15.5A1.5 1.5 0 0 1 3.5 14V5.5A1.5 1.5 0 0 1 5 4h8.5A1.5 1.5 0 0 1 15 5.5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <div class="field-row">
+          <span id="detailPass">••••••••••</span>
+          <div class="icon-btn-row">
+            <button class="icon-btn" id="togglePass" aria-label="Mostrar contraseña">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="2.6"/></svg>
+            </button>
+            <button class="icon-btn" data-copy="password" aria-label="Copiar contraseña">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M5 15.5A1.5 1.5 0 0 1 3.5 14V5.5A1.5 1.5 0 0 1 5 4h8.5A1.5 1.5 0 0 1 15 5.5"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">VERIFICACIÓN</div>
+      <div class="toggle-line">
+        <span>¿Pide código por email?</span>
+        <span class="pill" id="askPill"></span>
+      </div>
+      <div class="field" id="verifyEmailField">
+        <label>Llega a</label>
+        <div class="field-row"><span id="detailVerifyEmail"></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">NOTAS</div>
+      <div class="notes-text" id="detailNotes"></div>
+    </div>
+
+    <div class="admin-row" id="adminActions">
+      <button class="btn-text" id="editBtn">Editar</button>
+      <button class="btn-danger" id="deleteBtn">Eliminar plataforma</button>
+    </div>
+    <div class="confirm-row" id="confirmRow" hidden>
+      <span>¿Eliminar esta plataforma del grupo?</span>
+      <button class="btn-text" id="confirmNo" style="color:inherit;">Cancelar</button>
+      <button class="btn-danger" id="confirmYes" style="color:inherit; text-decoration:underline;">Sí, eliminar</button>
+    </div>
+  </div>
+
+  <p class="footnote">Prototipo en validación — las contraseñas se guardan cifradas en el servidor. Usalo con datos reales del grupo solo si confiás en este entorno de prueba.</p>
+</div>
+
+<!-- ADD / EDIT SHEET -->
+<div class="overlay" id="overlay" hidden>
+  <div class="sheet">
+    <h3 id="sheetTitle">Agregar plataforma</h3>
+    <form id="platformForm">
+      <div class="field">
+        <label>Nombre de la plataforma</label>
+        <input class="input" id="fName" placeholder="Ej: Netflix, Spotify, Disney+" required>
+        <div class="err" id="errName"></div>
+      </div>
+      <div class="field">
+        <label>Usuario / correo</label>
+        <input class="input" id="fUser" placeholder="familia@ejemplo.com">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input class="input" id="fPass" placeholder="••••••••••">
+      </div>
+      <div class="switch-row">
+        <span>¿Pide código por email?</span>
+        <button type="button" class="switch" id="askSwitch" aria-label="¿Pide código por email?"></button>
+      </div>
+      <div class="field" id="fVerifyWrap" hidden style="margin-top:10px;">
+        <label>Correo de verificación</label>
+        <input class="input" id="fVerifyEmail" placeholder="familia@ejemplo.com">
+      </div>
+      <div class="field" style="margin-top:14px;">
+        <label>Notas</label>
+        <textarea class="input" id="fNotes" placeholder="Instrucciones o recordatorios para el grupo"></textarea>
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="saveBtn">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* Initials badge — never a platform's real logo or wordmark, just the
+     service's own initials set in the app's own typeface, so no brand's
+     proprietary lettering gets reproduced either. */
+  function initialsFor(name){
+    var words = (name || "").replace(/[^\p{L}\p{N}\s]/gu, " ").trim().split(/\s+/).filter(Boolean);
+    if(words.length >= 2) return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    if(words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return "?";
+  }
+  /* Deterministic color lane (0-3) per platform, just for visual variety
+     across the badge palette — not tied to any brand's real colors. */
+  function hueFor(id){
+    var s = String(id || ""), sum = 0;
+    for(var i=0;i<s.length;i++){ sum += s.charCodeAt(i); }
+    return sum % 4;
+  }
+
+  var state = {
+    role: null,
+    platforms: [],
+    activeId: null,
+    activeDetail: null,
+    editingId: null
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var loginView = $("view-login"), appShell = $("appShell");
+  var gridView = $("view-grid"), detailView = $("view-detail");
+  var grid = $("grid"), statCount = $("statCount"), statCode = $("statCode");
+
+  function escapeHtml(s){
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+
+  function api(path, opts){
+    opts = opts || {};
+    var headers = opts.body ? {"Content-Type":"application/json"} : {};
+    return fetch(path, {
+      method: opts.method || "GET",
+      headers: headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    }).then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(data){
+        return {ok:r.ok, status:r.status, data:data};
+      });
+    });
+  }
+
+  function showLogin(){
+    state.role = null; state.platforms = []; state.activeId = null; state.activeDetail = null;
+    appShell.hidden = true;
+    loginView.hidden = false;
+  }
+  function showApp(){
+    loginView.hidden = true;
+    appShell.hidden = false;
+    detailView.hidden = true;
+    gridView.hidden = false;
+    $("rolePill").textContent = state.role === "admin" ? "Administrador" : "Integrante";
+    $("rolePill").className = "role-pill" + (state.role === "admin" ? " admin" : "");
+  }
+
+  /* ---- boot: ¿ya hay sesión? ---- */
+  api("/api/session").then(function(res){
+    if(res.ok && res.data.role){
+      state.role = res.data.role;
+      showApp();
+      loadAndRenderGrid();
+    } else {
+      showLogin();
+    }
+  }).catch(function(){ showLogin(); });
+
+  /* ---- login ---- */
+  $("loginForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var pass = $("loginPass").value;
+    $("loginErr").textContent = "";
+    $("loginBtn").disabled = true;
+    api("/api/login", {method:"POST", body:{passphrase: pass}}).then(function(res){
+      $("loginBtn").disabled = false;
+      if(!res.ok){
+        $("loginErr").textContent = res.data.error || "No se pudo entrar.";
+        return;
+      }
+      $("loginPass").value = "";
+      state.role = res.data.role;
+      showApp();
+      loadAndRenderGrid();
+    }).catch(function(){
+      $("loginBtn").disabled = false;
+      $("loginErr").textContent = "No se pudo conectar con el servidor. Probá de nuevo.";
+    });
+  });
+
+  $("logoutBtn").addEventListener("click", function(){
+    api("/api/logout", {method:"POST"}).then(function(){ showLogin(); }).catch(function(){ showLogin(); });
+  });
+
+  /* ---- grid ---- */
+  function loadAndRenderGrid(){
+    api("/api/platforms").then(function(res){
+      if(res.status === 401){ showLogin(); return; }
+      if(!res.ok) return;
+      state.platforms = res.data;
+      renderGrid();
+    });
+  }
+
+  function renderGrid(){
+    var items = state.platforms;
+    statCount.textContent = items.length;
+    statCode.textContent = items.filter(function(p){ return p.asksCode; }).length;
+    var html = "";
+    items.forEach(function(p){
+      html += '<button type="button" class="tile" data-id="' + p.id + '">' +
+        '<div class="badge badge-' + hueFor(p.id) + '">' + escapeHtml(initialsFor(p.name)) + '</div>' +
+        '<div class="tile-name">' + escapeHtml(p.name) + '</div>' +
+        (p.asksCode ? '<div class="tile-meta"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.3" y="5.5" width="17.4" height="13" rx="1.8"/><path d="M4 6.6l8 6.4 8-6.4"/></svg>Pide código</div>' : '<div class="tile-meta">&nbsp;</div>') +
+        '</button>';
+    });
+    if(state.role === "admin"){
+      html += '<button type="button" class="tile tile-add" id="addTile">' +
+        '<div class="arrow"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg></div>' +
+        '<span>Agregar<br>plataforma</span></button>';
+    }
+    if(items.length === 0 && state.role !== "admin"){
+      html = '<div class="empty">Todavía no hay plataformas cargadas en este grupo.</div>';
+    }
+    grid.innerHTML = html;
+
+    grid.querySelectorAll(".tile[data-id]").forEach(function(el){
+      el.addEventListener("click", function(){ openDetail(el.getAttribute("data-id")); });
+    });
+    var addTile = $("addTile");
+    if(addTile) addTile.addEventListener("click", function(){ openSheet(null); });
+  }
+
+  /* ---- detail ---- */
+  function fillDetail(p){
+    state.activeDetail = p;
+    $("detailName").textContent = p.name;
+    $("detailBadge").textContent = initialsFor(p.name);
+    $("detailBadge").className = "badge badge-lg badge-" + hueFor(p.id);
+    $("detailUser").textContent = p.user || "—";
+    $("detailPass").textContent = "••••••••••";
+    $("detailPass").setAttribute("data-visible", "0");
+    $("togglePass").setAttribute("aria-label", "Mostrar contraseña");
+    $("askPill").textContent = p.asksCode ? "Sí" : "No";
+    $("askPill").className = "pill " + (p.asksCode ? "pill-yes" : "pill-no");
+    $("verifyEmailField").hidden = !p.asksCode;
+    $("detailVerifyEmail").textContent = p.verifyEmail || "—";
+    $("detailNotes").textContent = p.notes || "Sin notas para esta plataforma.";
+    $("adminActions").hidden = state.role !== "admin";
+    $("confirmRow").hidden = true;
+  }
+
+  function openDetail(id){
+    api("/api/platforms/" + id).then(function(res){
+      if(res.status === 401){ showLogin(); return; }
+      if(!res.ok) return;
+      state.activeId = id;
+      fillDetail(res.data);
+      gridView.hidden = true; detailView.hidden = false;
+      window.scrollTo(0,0);
+    });
+  }
+
+  $("backBtn").addEventListener("click", function(){
+    detailView.hidden = true; gridView.hidden = false; state.activeId = null; state.activeDetail = null;
+  });
+
+  $("togglePass").addEventListener("click", function(){
+    var p = state.activeDetail; if(!p) return;
+    var el = $("detailPass");
+    var visible = el.getAttribute("data-visible") === "1";
+    el.textContent = visible ? "••••••••••" : (p.password || "—");
+    el.setAttribute("data-visible", visible ? "0" : "1");
+    this.setAttribute("aria-label", visible ? "Mostrar contraseña" : "Ocultar contraseña");
+  });
+
+  function copyText(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).catch(function(){ fallbackCopy(text); });
+    } else { fallbackCopy(text); }
+  }
+  function fallbackCopy(text){
+    try{
+      var ta = document.createElement("textarea");
+      ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy");
+      document.body.removeChild(ta);
+    }catch(e){}
+  }
+  document.querySelectorAll("[data-copy]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var p = state.activeDetail; if(!p) return;
+      var field = btn.getAttribute("data-copy");
+      copyText(field === "user" ? (p.user || "") : (p.password || ""));
+      var original = btn.innerHTML;
+      btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+      setTimeout(function(){ btn.innerHTML = original; }, 1200);
+    });
+  });
+
+  $("editBtn").addEventListener("click", function(){ openSheet(state.activeId); });
+  $("deleteBtn").addEventListener("click", function(){ $("confirmRow").hidden = false; });
+  $("confirmNo").addEventListener("click", function(){ $("confirmRow").hidden = true; });
+  $("confirmYes").addEventListener("click", function(){
+    api("/api/platforms/" + state.activeId, {method:"DELETE"}).then(function(res){
+      if(res.status === 401){ showLogin(); return; }
+      detailView.hidden = true; gridView.hidden = false;
+      loadAndRenderGrid();
+    });
+  });
+
+  /* ---- add / edit sheet ---- */
+  var overlay = $("overlay"), askSwitch = $("askSwitch"), fVerifyWrap = $("fVerifyWrap");
+
+  function openSheet(id){
+    state.editingId = id;
+    var p = id ? state.activeDetail : null;
+    $("sheetTitle").textContent = p ? "Editar plataforma" : "Agregar plataforma";
+    $("fName").value = p ? p.name : "";
+    $("fUser").value = p ? p.user : "";
+    $("fPass").value = p ? p.password : "";
+    $("fNotes").value = p ? p.notes : "";
+    $("fVerifyEmail").value = p ? p.verifyEmail : "";
+    setAsk(p ? !!p.asksCode : false);
+    $("errName").textContent = "";
+    overlay.hidden = false;
+  }
+  function closeSheet(){ overlay.hidden = true; }
+  function setAsk(on){
+    askSwitch.classList.toggle("on", on);
+    askSwitch.setAttribute("data-on", on ? "1" : "0");
+    fVerifyWrap.hidden = !on;
+  }
+  askSwitch.addEventListener("click", function(){
+    setAsk(askSwitch.getAttribute("data-on") !== "1");
+  });
+  $("cancelBtn").addEventListener("click", closeSheet);
+  overlay.addEventListener("click", function(e){ if(e.target === overlay) closeSheet(); });
+
+  $("platformForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    var name = $("fName").value.trim();
+    if(!name){ $("errName").textContent = "Poné un nombre para la plataforma."; return; }
+    var data = {
+      name: name,
+      user: $("fUser").value.trim(),
+      password: $("fPass").value,
+      asksCode: askSwitch.getAttribute("data-on") === "1",
+      verifyEmail: $("fVerifyEmail").value.trim(),
+      notes: $("fNotes").value.trim()
+    };
+    $("saveBtn").disabled = true;
+    var wasEditing = state.editingId;
+    var req = wasEditing
+      ? api("/api/platforms/" + wasEditing, {method:"PUT", body:data})
+      : api("/api/platforms", {method:"POST", body:data});
+    req.then(function(res){
+      $("saveBtn").disabled = false;
+      if(res.status === 401){ showLogin(); return; }
+      if(res.status === 403){ $("errName").textContent = "Tu rol no permite hacer esto."; return; }
+      if(!res.ok){ $("errName").textContent = "No se pudo guardar. Probá de nuevo."; return; }
+      closeSheet();
+      loadAndRenderGrid();
+      if(wasEditing){ fillDetail(res.data); }
+    }).catch(function(){
+      $("saveBtn").disabled = false;
+      $("errName").textContent = "No se pudo conectar con el servidor.";
+    });
+  });
+
+})();
+</script>
+</body>
+</html>

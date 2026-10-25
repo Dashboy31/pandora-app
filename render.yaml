@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: pandora-backend
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    disk:
+      name: pandora-data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_PATH
+        value: /data/pandora.db
+      - key: ADMIN_PASSPHRASE
+        sync: false
+      - key: MEMBER_PASSPHRASE
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
